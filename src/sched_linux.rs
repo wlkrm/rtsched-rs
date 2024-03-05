@@ -1,6 +1,7 @@
 use super::sched_attr::{sched_get_attr, sched_set_attr, SchedAttr};
 use bitflags::bitflags;
 use nix::sched::CpuSet;
+pub use nix::unistd::Pid;
 use std::{fmt::Error, mem};
 
 /// Currently, Linux supports the scheduling policies defined in this enum.
@@ -115,7 +116,7 @@ pub struct Attributes {
 
 /// The `get_attr()` function wraps the `sched_getattr()` system call and fetches the scheduling policy and
 /// the associated attributes for the thread whose ID is specified in pid.
-pub fn get_attr(pid: nix::unistd::Pid) -> Result<Attributes, nix::Error> {
+pub fn get_attr(pid: Pid) -> Result<Attributes, nix::Error> {
     let mut attr = SchedAttr {
         size: 0,
         sched_policy: 0,
@@ -154,7 +155,7 @@ pub fn get_attr(pid: nix::unistd::Pid) -> Result<Attributes, nix::Error> {
 
 /// The `set_attr()` function wraps the `sched_setattr()` system call and sets the scheduling policy and
 /// associated attributes for the thread whose ID is specified in pid.
-pub fn set_attr(pid: nix::unistd::Pid, attr: Attributes) -> Result<(), nix::Error> {
+pub fn set_attr(pid: Pid, attr: Attributes) -> Result<(), nix::Error> {
     let mut attr = SchedAttr {
         size: mem::size_of::<SchedAttr>() as u32,
         sched_policy: attr.policy.into_raw(),
@@ -172,7 +173,7 @@ pub fn set_attr(pid: nix::unistd::Pid, attr: Attributes) -> Result<(), nix::Erro
         _ => Err(nix::Error::last()),
     }
 }
-pub fn set_other(pid: nix::unistd::Pid, nice: i32) -> Result<(), nix::Error> {
+pub fn set_other(pid: Pid, nice: i32) -> Result<(), nix::Error> {
     let att_other = Attributes {
         policy: Policy::Other,
         nice,
@@ -184,7 +185,7 @@ pub fn set_other(pid: nix::unistd::Pid, nice: i32) -> Result<(), nix::Error> {
     };
     set_attr(pid, att_other)
 }
-pub fn set_batch(pid: nix::unistd::Pid, nice: i32) -> Result<(), nix::Error> {
+pub fn set_batch(pid: Pid, nice: i32) -> Result<(), nix::Error> {
     let att_batch = Attributes {
         policy: Policy::Batch,
         nice,
@@ -196,7 +197,7 @@ pub fn set_batch(pid: nix::unistd::Pid, nice: i32) -> Result<(), nix::Error> {
     };
     set_attr(pid, att_batch)
 }
-pub fn set_idle(pid: nix::unistd::Pid) -> Result<(), nix::Error> {
+pub fn set_idle(pid: Pid) -> Result<(), nix::Error> {
     let att_batch = Attributes {
         policy: Policy::Idle,
         nice: 0,
@@ -208,7 +209,7 @@ pub fn set_idle(pid: nix::unistd::Pid) -> Result<(), nix::Error> {
     };
     set_attr(pid, att_batch)
 }
-pub fn set_fifo(pid: nix::unistd::Pid, priority: u32) -> Result<(), nix::Error> {
+pub fn set_fifo(pid: Pid, priority: u32) -> Result<(), nix::Error> {
     let att_batch = Attributes {
         policy: Policy::Fifo,
         nice: 0,
@@ -220,7 +221,7 @@ pub fn set_fifo(pid: nix::unistd::Pid, priority: u32) -> Result<(), nix::Error> 
     };
     set_attr(pid, att_batch)
 }
-pub fn set_rr(pid: nix::unistd::Pid, priority: u32) -> Result<(), nix::Error> {
+pub fn set_rr(pid: Pid, priority: u32) -> Result<(), nix::Error> {
     let att_batch = Attributes {
         policy: Policy::RoundRobin,
         nice: 0,
@@ -233,7 +234,7 @@ pub fn set_rr(pid: nix::unistd::Pid, priority: u32) -> Result<(), nix::Error> {
     set_attr(pid, att_batch)
 }
 pub fn set_deadline(
-    pid: nix::unistd::Pid,
+    pid: Pid,
     deadline_ns: u64,
     period_ns: u64,
     runtime_ns: u64,
@@ -283,11 +284,11 @@ pub fn sched_yield() -> Result<(), nix::Error> {
     }
 }
 
-pub fn set_affinity(pida: nix::unistd::Pid, set: &nix::sched::CpuSet) -> Result<(), nix::Error> {
+pub fn set_affinity(pida: Pid, set: &nix::sched::CpuSet) -> Result<(), nix::Error> {
     nix::sched::sched_setaffinity(pida, set)
 }
 
-pub fn get_affinity(pida: nix::unistd::Pid) -> Result<CpuSet, nix::Error> {
+pub fn get_affinity(pida: Pid) -> Result<CpuSet, nix::Error> {
     nix::sched::sched_getaffinity(pida)
 }
 
@@ -306,42 +307,42 @@ mod tests {
             priority: 0,
             runtime_ns: 0,
         };
-        set_attr(nix::unistd::Pid::this(), att).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_attr(Pid::this(), att).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
 
         assert_eq!(a.policy, Policy::Batch);
         assert_eq!(a.nice, 4);
     }
     #[test]
     fn test_setter() {
-        set_other(nix::unistd::Pid::this(), -20).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_other(Pid::this(), -20).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::Other);
         assert_eq!(a.nice, -20);
 
-        set_batch(nix::unistd::Pid::this(), 19).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_batch(Pid::this(), 19).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::Batch);
         assert_eq!(a.nice, 19);
 
-        set_idle(nix::unistd::Pid::this()).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_idle(Pid::this()).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::Idle);
 
-        set_fifo(nix::unistd::Pid::this(), 60).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_fifo(Pid::this(), 60).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::Fifo);
         assert_eq!(a.nice, 0);
         assert_eq!(a.priority, 60);
 
-        set_rr(nix::unistd::Pid::this(), 98).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_rr(Pid::this(), 98).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::RoundRobin);
         assert_eq!(a.nice, 0);
         assert_eq!(a.priority, 98);
 
-        set_deadline(nix::unistd::Pid::this(), 1_000_000, 1_000_000, 50_000).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_deadline(Pid::this(), 1_000_000, 1_000_000, 50_000).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::Deadline);
         assert_eq!(a.nice, 0);
         assert_eq!(a.priority, 0);
@@ -352,8 +353,8 @@ mod tests {
 
     #[test]
     fn test_deadline() {
-        set_deadline(nix::unistd::Pid::this(), 1_000_000, 1_000_000, 50_000).unwrap();
-        let a = get_attr(nix::unistd::Pid::this()).unwrap();
+        set_deadline(Pid::this(), 1_000_000, 1_000_000, 50_000).unwrap();
+        let a = get_attr(Pid::this()).unwrap();
         assert_eq!(a.policy, Policy::Deadline);
         assert_eq!(a.nice, 0);
         assert_eq!(a.priority, 0);
@@ -371,14 +372,11 @@ mod tests {
 
     #[test]
     fn test_affinity() {
-        let mut set = get_affinity(nix::unistd::Pid::this()).unwrap();
+        let mut set = get_affinity(Pid::this()).unwrap();
         set.unset(0).unwrap();
-        set_affinity(nix::unistd::Pid::this(), &set).unwrap();
+        set_affinity(Pid::this(), &set).unwrap();
         set.set(0).unwrap();
-        set_affinity(nix::unistd::Pid::this(), &set).unwrap();
-        assert!(get_affinity(nix::unistd::Pid::this())
-            .unwrap()
-            .is_set(0)
-            .unwrap());
+        set_affinity(Pid::this(), &set).unwrap();
+        assert!(get_affinity(Pid::this()).unwrap().is_set(0).unwrap());
     }
 }

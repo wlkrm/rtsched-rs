@@ -1,4 +1,5 @@
-use libc::{self, c_long, pid_t};
+pub use libc::pid_t;
+use libc::{self, c_long};
 
 #[repr(C)]
 #[derive(Debug, Clone)]
