@@ -1,6 +1,6 @@
 use super::sched_attr::{sched_get_attr, sched_set_attr, SchedAttr};
 use bitflags::bitflags;
-use nix::sched::CpuSet;
+pub use nix::sched::CpuSet;
 pub use nix::unistd::Pid;
 use std::{fmt::Error, mem};
 
