@@ -13,5 +13,5 @@ repository = "https://github.com/marcfir/rtsched-rs"
 
 [dependencies]
 libc = { version = "0.2" }
-nix = { version = "0.28", features = ["process", "sched"] }
+nix = { version = "0.29", features = ["process", "sched"] }
 bitflags = "2.4"
