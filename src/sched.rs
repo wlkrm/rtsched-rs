@@ -337,7 +337,7 @@ pub fn get_affinity(pid: Pid) -> Result<CpuSet, Errno> {
 
 #[cfg(test)]
 mod tests {
-    use crate::sched_linux::*;
+    use crate::sched::*;
 
     #[test]
     fn test_setattr() {
