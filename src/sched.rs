@@ -152,6 +152,9 @@ impl Pid {
     pub fn this() -> Self {
         Self(0)
     }
+    pub fn new(pid: pid_t) -> Self {
+        Self(pid)
+    }
 }
 
 /// The `get_attr()` function wraps the `sched_getattr()` system call and fetches the scheduling policy and
